@@ -33,6 +33,7 @@ func main() {
 	var escape float64
 	var iterations uint16
 	var k uint16
+	var avraw uint64
 
 	iterations = 65535
 	escape = 10000
@@ -48,9 +49,10 @@ func main() {
 	   ci = (rand() % 10000) / 500.0 - 10;
 	*/
 
-	cr := rnd.Intn(10000)/500 - 10 // range +- 10
-	ci := rnd.Intn(10000)/500 - 10
-	fmt.Printf("cr:%d ci:%d\n", cr, ci)
+	cr := float64(rnd.Intn(10000))/500.0 - 10.0 // range +- 10
+	ci := float64(rnd.Intn(10000))/500.0 - 10.0
+
+	fmt.Printf("cr:%f ci:%f\n", cr, ci)
 
 	t := 0
 	tt := 10000000
@@ -67,8 +69,8 @@ func main() {
 			for k = 0; k < iterations; k++ {
 				a := ir
 				b := ii
-				ir = a/math.Cos(b) + float64(cr)
-				ii = b/math.Sin(a) + float64(ci)
+				ir = a/math.Cos(b) + cr
+				ii = b/math.Sin(a) + ci
 				if ir*ir+ii*ii > escape {
 					break
 				}
@@ -76,6 +78,9 @@ func main() {
 			// density[j*NX+i] = k;
 			//fmt.Printf("%04X\n", k)
 			image[y*IMaxX+x] = k
+
+			avraw += uint64(k)
+
 			if int(k) > t {
 				t = int(k)
 			}
@@ -95,6 +100,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	av := float64(avraw) / (float64(IMaxX) * float64(IMaxY))
+	fmt.Printf("Average value: %f\n", av)
 
 	header := fmt.Sprintf("P5 %d %d 65535\n", IMaxX, IMaxY)
 
