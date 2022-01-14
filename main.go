@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -49,6 +50,10 @@ func main() {
 
 	cr := rnd.Intn(10000)/500 - 10 // range +- 10
 	ci := rnd.Intn(10000)/500 - 10
+	fmt.Printf("cr:%d ci:%d\n", cr, ci)
+
+	t := 0
+	tt := 10000000
 
 	for x := 0; x < IMaxX; x++ {
 		zr := xmin + float64(x)*(xmax-xmin)/float64(IMaxX)
@@ -69,11 +74,19 @@ func main() {
 				}
 			}
 			// density[j*NX+i] = k;
+			//fmt.Printf("%04X\n", k)
 			image[y*IMaxX+x] = k
+			if int(k) > t {
+				t = int(k)
+			}
+
+			if int(k) < tt {
+				tt = int(k)
+			}
 
 		}
 	}
-
+	fmt.Println(tt, t)
 	file, err := os.Create("test.pgm")
 	if err != nil {
 		log.Fatalln(err)
@@ -83,8 +96,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	header := fmt.Sprintf("P5 %d %d 65535\n", IMaxX, IMaxY)
+
+	_, err = file.Write([]byte(header))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var binbuf bytes.Buffer
-	binary.Write(&binbuf, binary.BigEndian, image)
+	binary.Write(&binbuf, binary.LittleEndian, image)
 	_, err = file.Write(binbuf.Bytes())
 	if err != nil {
 		log.Fatal(err)
