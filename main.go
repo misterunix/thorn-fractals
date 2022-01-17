@@ -27,10 +27,12 @@ var ymax float64
 var iterations uint16
 var escape float64
 
+var imagecount float64
+
 func main() {
 
-	IMaxX = 10000
-	IMaxY = 10000
+	IMaxX = 1000
+	IMaxY = 1000
 	xmin = -math.Pi
 	xmax = math.Pi
 	ymin = -math.Pi
@@ -49,7 +51,7 @@ func main() {
 	//color1 := color.RGBA{0xff, 0xff, 0xff, 0xff}
 	bgcolor := image.NewUniform(color.Black)
 
-	draw.Draw(Img, Img.Bounds(), bgcolor, image.Point{}, draw.Src)
+	//draw.Draw(Img, Img.Bounds(), bgcolor, image.Point{}, draw.Src)
 
 	var k uint16
 	//var avraw uint64
@@ -69,89 +71,97 @@ func main() {
 	   ci = (rand() % 10000) / 500.0 - 10;
 	*/
 
-	cr := float64(rnd.Intn(10000))/500.0 - 10.0 // range +- 10
-	ci := float64(rnd.Intn(10000))/500.0 - 10.0
-
+	//cr := float64(rnd.Intn(IMaxX))/(float64(IMaxX)/2.0) - 10.0 // range +- 10
+	//ci := float64(rnd.Intn(IMaxY))/(float64(IMaxY)/2.0) - 10.0
+	cr := float64(rnd.Intn(IMaxX))/(float64(IMaxX)/2.0) - 10.0 // range +- 10
+	ci := float64(rnd.Intn(IMaxY))/(float64(IMaxY)/2.0) - 10.0
 	t, tt := Pass1(cr, ci)
-
+	cro := cr
 	fmt.Println(t, tt)
 	fmt.Printf("cr:%f ci:%f\n", cr, ci)
+	var fnci int
+	fnci = 0
+	for imagecount = 0; imagecount < 360; imagecount += 0.1 {
+		ra := (imagecount / 360.0) * math.Pi * 2
+		cr = cro + math.Sin(ra)
+		//ci = ci + math.Cos(ra)
+		draw.Draw(Img, Img.Bounds(), bgcolor, image.Point{}, draw.Src)
+		for x := 0; x < IMaxX; x++ {
+			zr := xmin + float64(x)*(xmax-xmin)/float64(IMaxX)
 
-	for x := 0; x < IMaxX; x++ {
-		zr := xmin + float64(x)*(xmax-xmin)/float64(IMaxX)
+			for y := 0; y < IMaxY; y++ {
+				zi := ymin + float64(y)*(ymax-ymin)/float64(IMaxY)
 
-		for y := 0; y < IMaxY; y++ {
-			zi := ymin + float64(y)*(ymax-ymin)/float64(IMaxY)
+				ir := zr
+				ii := zi
 
-			ir := zr
-			ii := zi
-
-			for k = 0; k < iterations; k++ {
-				a := ir
-				b := ii
-				ir = a/math.Cos(b) + cr
-				ii = b/math.Sin(a) + ci
-				if ir*ir+ii*ii > escape {
-					break
+				for k = 0; k < iterations; k++ {
+					a := ir
+					b := ii
+					ir = a/math.Cos(b) + cr
+					ii = b/math.Sin(a) + ci
+					if ir*ir+ii*ii > escape {
+						break
+					}
 				}
+				// density[j*NX+i] = k;
+				//fmt.Printf("%04X\n", k)
+				if k == 0xFFFF {
+					k = 0
+				}
+
+				buckets[int(k)]++
+
+				//rimage[y*IMaxX+x] = k
+
+				//tv := (((k - t) * (255 - 1)) / (tt - t)) + 1
+
+				tv := (((k - t) * (255 - 64)) / (tt - t)) + 64
+
+				//fmt.Printf("%d = (((%d - %d) * (255 - 1)) / (%d - %d)) + 1\n", tv, k, t, tt, t)
+
+				//fmt.Println(tv)
+				r := uint8(tv)
+				g := r
+				b := r
+				al := uint8(255)
+				cc := color.RGBA{r, g, b, al}
+				//fmt.Printf("%+v\n", cc)
+
+				Img.Set(x, y, cc)
+
+				//avraw += uint64(k)
+				/*
+					if k > t {
+						t = k
+					}
+
+					if k < tt {
+						tt = k
+					}
+				*/
 			}
-			// density[j*NX+i] = k;
-			//fmt.Printf("%04X\n", k)
-			if k == 0xFFFF {
-				k = 0
-			}
-
-			buckets[int(k)]++
-
-			//rimage[y*IMaxX+x] = k
-
-			//tv := (((k - t) * (255 - 1)) / (tt - t)) + 1
-
-			tv := (((k - t) * (255 - 64)) / (tt - t)) + 64
-
-			//fmt.Printf("%d = (((%d - %d) * (255 - 1)) / (%d - %d)) + 1\n", tv, k, t, tt, t)
-
-			//fmt.Println(tv)
-			r := uint8(tv)
-			g := r
-			b := r
-			al := uint8(255)
-			cc := color.RGBA{r, g, b, al}
-			//fmt.Printf("%+v\n", cc)
-
-			Img.Set(x, y, cc)
-
-			//avraw += uint64(k)
-			/*
-				if k > t {
-					t = k
-				}
-
-				if k < tt {
-					tt = k
-				}
-			*/
 		}
+		fnci++
+		sfn := fmt.Sprintf("images/%07d.png", fnci)
+		f, err := os.Create(sfn)
+		if err != nil {
+			// Handle error
+			log.Fatalln(err)
+		}
+		err = png.Encode(f, Img)
+		if err != nil {
+			log.Fatalln(err)
+			// Handle error
+		}
+		f.Close()
+
 	}
+
 	fmt.Println(tt, t)
 	//for e1, e2 := range buckets {
 	//		fmt.Printf("%d,%d\n", e1, e2)
 	//}
-
-	f, err := os.Create("outimage.png")
-	if err != nil {
-		// Handle error
-		log.Fatalln(err)
-	}
-	defer f.Close()
-
-	// Encode to `PNG` with `DefaultCompression` level
-	// then save to file
-	err = png.Encode(f, Img)
-	if err != nil {
-		log.Fatalln(err)
-		// Handle error
-	}
 
 	/*
 		fmt.Println(tt, t)
