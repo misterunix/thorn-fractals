@@ -15,6 +15,7 @@
 # vendor/
 *.png 
 *.pgm
+*.pnm
 *.xcf
 thorn-fractals
 l 
