@@ -79,13 +79,17 @@ func main() {
 	cro := cr
 	fmt.Println(t, tt)
 	fmt.Printf("cr:%f ci:%f\n", cr, ci)
-	var fnci int
-	fnci = 0
+
+	fnci := 0
 	for imagecount = 0; imagecount < 360; imagecount += 0.1 {
 		ra := (imagecount / 360.0) * math.Pi * 2
 		cr = cro + math.Sin(ra)
 		//ci = ci + math.Cos(ra)
+
+		// clear the image and set to bgcolor
 		draw.Draw(Img, Img.Bounds(), bgcolor, image.Point{}, draw.Src)
+
+		//var howclose float64
 		for x := 0; x < IMaxX; x++ {
 			zr := xmin + float64(x)*(xmax-xmin)/float64(IMaxX)
 
@@ -100,6 +104,7 @@ func main() {
 					b := ii
 					ir = a/math.Cos(b) + cr
 					ii = b/math.Sin(a) + ci
+					//howclose = ir*ir + ii*ii/escape
 					if ir*ir+ii*ii > escape {
 						break
 					}
@@ -121,11 +126,29 @@ func main() {
 				//fmt.Printf("%d = (((%d - %d) * (255 - 1)) / (%d - %d)) + 1\n", tv, k, t, tt, t)
 
 				//fmt.Println(tv)
-				r := uint8(tv)
-				g := r
-				b := r
-				al := uint8(255)
-				cc := color.RGBA{r, g, b, al}
+
+				var r, g, b, a uint8
+				/*
+					r = uint8(tv)
+					g = r
+					b = r
+				*/
+				rtv := uint8(tv)
+				r = rtv
+				gtv := tv + 30
+				if gtv > 255 {
+					gtv -= 255
+				}
+				g = uint8(gtv)
+
+				btv := tv + 70
+				if btv > 255 {
+					btv -= 255
+				}
+				b = uint8(btv)
+
+				a = uint8(0xff)
+				cc := color.RGBA{r, g, b, a}
 				//fmt.Printf("%+v\n", cc)
 
 				Img.Set(x, y, cc)
@@ -143,7 +166,8 @@ func main() {
 			}
 		}
 		fnci++
-		sfn := fmt.Sprintf("images/%07d.png", fnci)
+		pid := os.Getpid()
+		sfn := fmt.Sprintf("images/%07d-%07d.png", pid, fnci)
 		f, err := os.Create(sfn)
 		if err != nil {
 			// Handle error
