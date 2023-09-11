@@ -31,12 +31,15 @@ var imagecount float64
 
 func main() {
 
-	IMaxX = 1000
-	IMaxY = 1000
-	xmin = -math.Pi
-	xmax = math.Pi
-	ymin = -math.Pi
-	ymax = math.Pi
+	// image size
+	IMaxX = 6000
+	IMaxY = 6000
+
+	// x,y range
+	xmin = -math.Pi / 16
+	xmax = math.Pi / 16
+	ymin = -math.Pi / 8
+	ymax = math.Pi / 8
 
 	p1 := image.Point{
 		X: 0,
@@ -73,6 +76,7 @@ func main() {
 
 	//cr := float64(rnd.Intn(IMaxX))/(float64(IMaxX)/2.0) - 10.0 // range +- 10
 	//ci := float64(rnd.Intn(IMaxY))/(float64(IMaxY)/2.0) - 10.0
+
 	cr := float64(rnd.Intn(IMaxX))/(float64(IMaxX)/2.0) - 10.0 // range +- 10
 	ci := float64(rnd.Intn(IMaxY))/(float64(IMaxY)/2.0) - 10.0
 	t, tt := Pass1(cr, ci)
@@ -135,6 +139,7 @@ func main() {
 				*/
 				rtv := uint8(tv)
 				r = rtv
+
 				gtv := tv + 30
 				if gtv > 255 {
 					gtv -= 255
